@@ -304,7 +304,9 @@ export class App {
 /** 从配色推导界面强调色。 */
 function accentOf(theme: Theme): string {
   if (theme.id === 'macaron') return '#f2a1a8';
-  if (theme.id === 'custom') return theme.face.F;
+  // 自定义配色没有固定品牌色，取「上表面」当强调色：黄顶朝向下它是积木里最亮的一面，
+  // 放在深色界面上最显眼（此前取的是前面，改成黄顶后前面是深蓝，当强调色几乎看不见）。
+  if (theme.id === 'custom') return theme.face.U;
   return '#5aa9ff';
 }
 
