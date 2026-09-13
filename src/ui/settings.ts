@@ -14,8 +14,6 @@ export interface Settings {
   speed: number;
   /** 是否显示操作提示条。 */
   hints: boolean;
-  /** 每种魔方的最佳成绩（毫秒）。 */
-  bestTimes: Record<string, number>;
 }
 
 export interface CubeBridge {
@@ -38,7 +36,6 @@ export const defaultSettings = (): Settings => ({
   customMirror: STANDARD_THEME.mirror,
   speed: 1,
   hints: true,
-  bestTimes: {},
 });
 
 const KEY = 'cube.settings.v1';
@@ -69,7 +66,6 @@ function merge(base: Settings, patch: Partial<Settings>): Settings {
     ...base,
     ...patch,
     customFace: { ...base.customFace, ...(patch.customFace ?? {}) },
-    bestTimes: { ...base.bestTimes, ...(patch.bestTimes ?? {}) },
   };
 }
 

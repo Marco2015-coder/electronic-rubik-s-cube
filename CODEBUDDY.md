@@ -41,7 +41,7 @@ src/shared/      主进程与界面共用的纯逻辑（不碰 DOM）
   puzzle/cubic.ts     立方体系魔方（正阶 + 镜面）唯一实现
 src/ui/          渲染进程
   index.ts       入口，创建 App
-  app.ts         应用状态机、计时、成绩、设置、按钮/键盘绑定
+  app.ts         应用状态机、步数统计、设置、按钮/键盘绑定
   viewport.ts    输入 → 转动、动画队列、渲染调度
   scene.ts       Canvas 2D 渲染器 + 射线拾取
   camera.ts      轨道相机
@@ -125,3 +125,4 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 - 2026-09-13：解决 U 盘（FAT32）上的 `detected dubious ownership`——经用户确认执行 `git config --global --add safe.directory F:/electronic-rubik-s-cube`；**换电脑或盘符变化需按新路径重新添加**。
 - 2026-09-13：应要求把「每次任务都更新 `CODEBUDDY.md`」定为固定协作约定（见 §5.6）。
 - 2026-09-13：修复「魔方完全拖不动」。根因是 `OrbitCamera.ray()` 的射线方向取了 `+zc`（应为 `-zc`）：射线打到相机背后，`pick()` 恒返回 `null`，任何拖动都不产生转动，而渲染完全正常所以肉眼看不出来。修好后把「左键点空白」从 `idle`（什么都不做）改成转视角，与界面文案一致。`smoke.ts` 新增**真实鼠标拖动**回归（`sendInputEvent`），此前冒烟测试只调 API，所以漏掉了这个 bug。验证：拖魔方转出 `U'`、步数 1；拖空白视角 yaw 0.620 → -0.341；typecheck 通过、selftest 157 项通过。
+- 2026-09-13：按用户要求**删掉计时与最佳成绩**——游戏内计时和真实手速差太远，留着反而误导，于是只保留步数。删掉顶栏「时间 / 最佳」两个格、`startTimer/stopTimer/elapsed/startedAt/timerHandle`、`formatTime()`、`updateBestDisplay()`，以及设置面板里的「成绩记录 / 清空记录」；`Settings` 不再有 `bestTimes` 字段（旧存档里残留的该字段会被 `merge()` 带上但没人读，无副作用）。`updateStatsDisplay()` 更名 `updateMoveCount()`，界面文案同步改为「打乱完成，随时开始」/「拧动中…」。验证：build + typecheck + smoke 全绿、拖动回归通过，截图确认顶栏只剩「步数」、设置面板无成绩块。

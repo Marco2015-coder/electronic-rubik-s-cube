@@ -1,5 +1,5 @@
 /**
- * 设置面板：配色方案、动画速度、操作说明、成绩记录。
+ * 设置面板：配色方案、自定义颜色、动画速度、操作说明。
  */
 
 import { FACE_COLOR_KEYS, FACE_COLOR_LABELS, builtinThemes } from '../shared/themes';
@@ -81,19 +81,6 @@ export function renderSettingsPanel(
   help.appendChild(list);
   root.appendChild(help);
 
-  // --- 记录 ---
-  const records = setting('成绩记录', '复原成功后会记录该魔方的最快时间。');
-  const bestCount = Object.keys(settings.bestTimes).length;
-  const clear = document.createElement('div');
-  clear.className = 'segmented';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = `清空记录（${bestCount} 项）`;
-  btn.disabled = bestCount === 0;
-  btn.addEventListener('click', () => onChange({ bestTimes: {} }));
-  clear.appendChild(btn);
-  records.appendChild(clear);
-  root.appendChild(records);
 }
 
 function setting(label: string, hint: string): HTMLDivElement {

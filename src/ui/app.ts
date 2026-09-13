@@ -18,27 +18,15 @@ const $ = <T extends HTMLElement>(id: string): T => {
   return el as T;
 };
 
-function formatTime(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return '—';
-  const s = ms / 1000;
-  if (s < 60) return s.toFixed(2);
-  const m = Math.floor(s / 60);
-  return `${m}:${(s - m * 60).toFixed(2).padStart(5, '0')}`;
-}
-
 export class App {
   private settings: Settings;
   private theme: Theme;
   private viewport: Viewport;
 
-  private current: PuzzleDef | null = null;
   private puzzle: Puzzle | null = null;
   private phase: Phase = 'idle';
 
-  private startedAt = 0;
-  private elapsed = 0;
   private moves = 0;
-  private timerHandle = 0;
 
   private els = {
     gameUi: $('game-ui'),
@@ -53,9 +41,7 @@ export class App {
     celebrateStats: $('celebrate-stats'),
     puzzleName: $('puzzle-name'),
     puzzleSub: $('puzzle-sub'),
-    statTime: $('stat-time'),
     statMoves: $('stat-moves'),
-    statBest: $('stat-best'),
     btnUndo: $<HTMLButtonElement>('btn-undo'),
     btnTheme: $('btn-theme'),
   };
@@ -70,7 +56,7 @@ export class App {
       onIdle: () => {
         if (this.phase === 'scrambling') {
           this.phase = 'ready';
-          this.els.puzzleSub.textContent = '随时可以开始，拧动即计时';
+          this.els.puzzleSub.textContent = '打乱完成，随时开始';
         }
       },
     });
@@ -111,7 +97,6 @@ export class App {
     this.applyTheme();
     this.refreshSettingsPanel();
     this.els.btnTheme.textContent = `配色：${this.themeName()}`;
-    this.updateBestDisplay();
   }
 
   private applyTheme(): void {
@@ -196,18 +181,15 @@ export class App {
       return;
     }
     const puzzle = def.create();
-    this.current = def;
     this.puzzle = puzzle;
     this.viewport.setPuzzle(puzzle);
     this.phase = 'ready';
     this.moves = 0;
-    this.elapsed = 0;
     this.els.puzzleName.textContent = def.name;
     this.els.puzzleSub.textContent = def.desc;
     this.els.gameUi.classList.remove('hidden');
     this.els.menu.classList.add('hidden');
-    this.updateStatsDisplay();
-    this.updateBestDisplay();
+    this.updateMoveCount();
     this.updateUndoButton();
     this.toast('拖动贴纸开始转动');
   }
@@ -215,10 +197,8 @@ export class App {
   private backToMenu(): void {
     this.phase = 'idle';
     this.puzzle = null;
-    this.current = null;
     this.els.gameUi.classList.add('hidden');
     this.els.menu.classList.remove('hidden');
-    this.stopTimer();
     this.renderMenu();
   }
 
@@ -233,9 +213,7 @@ export class App {
     this.puzzle.reset();
     this.phase = 'scrambling';
     this.moves = 0;
-    this.elapsed = 0;
-    this.stopTimer();
-    this.updateStatsDisplay();
+    this.updateMoveCount();
     this.updateUndoButton();
     this.viewport.requestScramble(moves, 55);
   }
@@ -246,9 +224,7 @@ export class App {
     this.puzzle.reset();
     this.phase = 'ready';
     this.moves = 0;
-    this.elapsed = 0;
-    this.stopTimer();
-    this.updateStatsDisplay();
+    this.updateMoveCount();
     this.updateUndoButton();
     this.viewport.requestRender();
     this.toast('已重置');
@@ -262,7 +238,7 @@ export class App {
     }
     this.viewport.requestUndo();
     this.moves = Math.max(0, this.moves - 1);
-    this.updateStatsDisplay();
+    this.updateMoveCount();
     window.setTimeout(() => this.updateUndoButton(), 220);
   }
 
@@ -279,12 +255,11 @@ export class App {
     }
     if (this.phase === 'ready') {
       this.phase = 'solving';
-      this.startTimer();
-      this.els.puzzleSub.textContent = '计时中…';
+      this.els.puzzleSub.textContent = '拧动中…';
     }
     if (this.phase === 'solving' || this.phase === 'solved') {
       this.moves++;
-      this.updateStatsDisplay();
+      this.updateMoveCount();
     }
     this.updateUndoButton();
     void label;
@@ -293,23 +268,10 @@ export class App {
   private handleSolved(): void {
     if (!this.puzzle) return;
     if (this.phase !== 'solving') return;
-    this.stopTimer();
     this.phase = 'solved';
-
-    const time = this.elapsed;
-    const id = this.current?.id ?? '';
-    const best = this.settings.bestTimes[id];
-    const isBest = !best || time < best;
-    if (isBest && id) {
-      this.updateSettings({ bestTimes: { ...this.settings.bestTimes, [id]: time } });
-    }
     this.els.puzzleSub.textContent = '已复原';
 
-    this.els.celebrateStats.innerHTML = [
-      `用时 <b>${formatTime(time)}</b>`,
-      `步数 <b>${this.moves}</b>`,
-      isBest ? '<b>新纪录！</b>' : `最佳 <b>${formatTime(best ?? time)}</b>`,
-    ].join('<br />');
+    this.els.celebrateStats.innerHTML = `步数 <b>${this.moves}</b>`;
     this.els.celebrate.classList.remove('hidden');
   }
 
@@ -317,30 +279,8 @@ export class App {
     this.els.celebrate.classList.add('hidden');
   }
 
-  private startTimer(): void {
-    this.startedAt = performance.now() - this.elapsed;
-    this.stopTimer();
-    this.timerHandle = window.setInterval(() => {
-      this.elapsed = performance.now() - this.startedAt;
-      this.els.statTime.textContent = formatTime(this.elapsed);
-    }, 43);
-  }
-
-  private stopTimer(): void {
-    if (this.timerHandle) window.clearInterval(this.timerHandle);
-    this.timerHandle = 0;
-    this.els.statTime.textContent = formatTime(this.elapsed);
-  }
-
-  private updateStatsDisplay(): void {
-    this.els.statTime.textContent = formatTime(this.elapsed);
+  private updateMoveCount(): void {
     this.els.statMoves.textContent = String(this.moves);
-  }
-
-  private updateBestDisplay(): void {
-    const id = this.current?.id ?? '';
-    const best = this.settings.bestTimes[id];
-    this.els.statBest.textContent = best ? formatTime(best) : '—';
   }
 
   private updateUndoButton(): void {
@@ -368,4 +308,4 @@ function accentOf(theme: Theme): string {
   return '#5aa9ff';
 }
 
-export { formatTime, findPuzzle };
+export { findPuzzle };
