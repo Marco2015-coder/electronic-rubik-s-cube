@@ -1,6 +1,6 @@
 # CODEBUDDY.md
 
-给 AI 助手的项目指南。项目放在 U 盘里、对话容易丢失，因此**做完重要改动或定下技术决策后，请顺手更新本文件**，以及 `.codebuddy/memory/` 下的日志。
+给 AI 助手的项目指南。项目放在 U 盘里、对话容易丢失，因此**每次任务完成后都要更新本文件**：至少在 §8 变更日志末尾追加一条记录（重要改动或技术决策还要改前面的正文），并同步 `.codebuddy/memory/` 下的日志。更新后一并提交推送。
 
 ---
 
@@ -92,6 +92,7 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 - 镜面魔方：按 `isPieceHome`（位置 + 朝向），并忽略正方体块的朝向。
 
 ### 5.5 其他
+- **每次任务结束都要更新本文件**（§8 追加日志 + 必要时改正文）并提交推送，用户明确要求的。
 - 不要删除 `.codebuddy/` 目录（项目记忆）。
 - 大文件优先用局部替换，改前先读最新内容。
 - 回答与代码注释用中文；注释解释「为什么」而不是「做了什么」。
@@ -111,6 +112,12 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 - 镜面魔方若想还原「打乱后凹凸不平」的真实观感，需要把块的内部改成圆柱/球面机构（工程量大）。
 - `tsconfig.renderer.json` / `tsconfig.ui.json` 重复，可合并。
 
-## 8. 历史决策记录
+## 8. 变更日志（每次任务做完都要在末尾追加一条）
+
+格式：`- YYYY-MM-DD：做了什么 + 为什么 + 验证/结果`。
 
 - 2026-09-13：修复「打乱后方块重叠」。两个根因——① 界面把打乱序列执行了两遍（引入 `Puzzle.applySilent` + `Viewport.requestScramble`，App 先 `reset()` 再重放）；② 镜面魔方三轴切分不一致（改为对称 + 三轴共用）。新增重叠回归自测，selftest 122 → 157 项。
+- 2026-09-13：建立 GitHub 仓库并首次推送，地址 https://github.com/Marco2015-coder/electronic-rubik-s-cube （public，主分支 main）。新增 `README.md`、`.gitattributes`（统一 LF）；补 `.gitignore`；README 用的图片复制到 `docs/`；仓库级 `core.autocrlf=false`、`core.filemode=false`。
+- 2026-09-13：排查「GitHub Desktop 双击无反应」。真因不是权限：**C 盘只剩 40 MB**，自动更新时解压不完整，`app-3.6.5` 缺 `v8_context_snapshot.bin` 等文件，启动即 `FATAL: Error loading V8 startup snapshot file`；随后 Squirrel 回滚清空安装目录，只能重装。清理缓存后 C 盘恢复约 4 GB，用户卸载重装后恢复正常。
+- 2026-09-13：解决 U 盘（FAT32）上的 `detected dubious ownership`——经用户确认执行 `git config --global --add safe.directory F:/electronic-rubik-s-cube`；**换电脑或盘符变化需按新路径重新添加**。
+- 2026-09-13：应要求把「每次任务都更新 `CODEBUDDY.md`」定为固定协作约定（见 §5.5）。
