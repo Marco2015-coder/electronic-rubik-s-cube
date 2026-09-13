@@ -91,7 +91,10 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 - 普通魔方：按贴纸世界法向与颜色比对。
 - 镜面魔方：按 `isPieceHome`（位置 + 朝向），并忽略正方体块的朝向。
 
-### 5.5 其他
+### 5.5 拾取射线方向（`OrbitCamera.ray`）
+`project()` 里 `vz = (p - eye)·zc`，只有 `vz < 0`（点在相机前方）才可见；而 `zc` 是「原点 → 相机」的**外向**轴（`eye = target + zc·distance`）。所以 `ray()` 的方向必须是 **`-zc`** 再加横向偏移。写成 `+zc` 射线会打到相机背后，`pick()` 恒返回 `null` —— 现象是**点哪都拾取不到、魔方完全拖不动，但渲染一切正常**（渲染不经过射线）。2026-09-13 修的就是这个。
+
+### 5.6 其他
 - **每次任务结束都要更新本文件**（§8 追加日志 + 必要时改正文）并提交推送，用户明确要求的。
 - 不要删除 `.codebuddy/` 目录（项目记忆）。
 - 大文件优先用局部替换，改前先读最新内容。
@@ -101,7 +104,7 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 
 1. `npm run typecheck` — 两套 tsconfig 都要过。
 2. `npm run selftest` — 目前 **157 项**，覆盖：转动/撤销/复原、打乱后无块重叠、重放打乱序列能复现同一状态、贴纸始终贴在表面且每面贴纸数 = 6N²、正方体块朝向不判定失误等。
-3. `npm run smoke` — Electron 真机流程 + `preview-out/*.png` 截图，人工看一眼有没有穿插、错位、控制台报错。
+3. `npm run smoke` — Electron 真机流程 + `preview-out/*.png` 截图，人工看一眼有没有穿插、错位、控制台报错。其中包含一次**真实鼠标拖动**回归（用 `sendInputEvent` 拖画面中心，断言历史新增 1 步）：拾取或方向判定坏掉时这里会报错，**不要删掉它**。
 4. `npm run preview -- --scramble` — 离线出图，快速检查 8 种魔方的外形与配色。
 
 新增「打乱后无重叠」这类几何不变量检查时，可复用 `selftest.mjs` 里的 `aabb()` / `countOverlap()` / `poseKey()` 辅助函数（判断依据：两块的轴对齐包围盒交集体积 > 1e-4 视为重叠）。
@@ -120,4 +123,5 @@ this.viewport.requestScramble(moves, 55); // 内部 applySilent 按原顺序重�
 - 2026-09-13：建立 GitHub 仓库并首次推送，地址 https://github.com/Marco2015-coder/electronic-rubik-s-cube （public，主分支 main）。新增 `README.md`、`.gitattributes`（统一 LF）；补 `.gitignore`；README 用的图片复制到 `docs/`；仓库级 `core.autocrlf=false`、`core.filemode=false`。
 - 2026-09-13：排查「GitHub Desktop 双击无反应」。真因不是权限：**C 盘只剩 40 MB**，自动更新时解压不完整，`app-3.6.5` 缺 `v8_context_snapshot.bin` 等文件，启动即 `FATAL: Error loading V8 startup snapshot file`；随后 Squirrel 回滚清空安装目录，只能重装。清理缓存后 C 盘恢复约 4 GB，用户卸载重装后恢复正常。
 - 2026-09-13：解决 U 盘（FAT32）上的 `detected dubious ownership`——经用户确认执行 `git config --global --add safe.directory F:/electronic-rubik-s-cube`；**换电脑或盘符变化需按新路径重新添加**。
-- 2026-09-13：应要求把「每次任务都更新 `CODEBUDDY.md`」定为固定协作约定（见 §5.5）。
+- 2026-09-13：应要求把「每次任务都更新 `CODEBUDDY.md`」定为固定协作约定（见 §5.6）。
+- 2026-09-13：修复「魔方完全拖不动」。根因是 `OrbitCamera.ray()` 的射线方向取了 `+zc`（应为 `-zc`）：射线打到相机背后，`pick()` 恒返回 `null`，任何拖动都不产生转动，而渲染完全正常所以肉眼看不出来。修好后把「左键点空白」从 `idle`（什么都不做）改成转视角，与界面文案一致。`smoke.ts` 新增**真实鼠标拖动**回归（`sendInputEvent`），此前冒烟测试只调 API，所以漏掉了这个 bug。验证：拖魔方转出 `U'`、步数 1；拖空白视角 yaw 0.620 → -0.341；typecheck 通过、selftest 157 项通过。

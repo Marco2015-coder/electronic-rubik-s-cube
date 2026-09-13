@@ -12,6 +12,7 @@
 2. **镜面魔方的切分必须「关于 0 对称」且「三轴共用同一套」**：块绕轴转 90° 时跨度会被搬到另一根轴上，只有对称 + 三轴一致才能保证旋转后仍精确落格。见 `mirrorCutPositions()`。
    代价：段长成对相等，出现「正方体块」，因此 `isSolved()` 对镜面魔方放宽为「位置归位即算归位」（`isCubeShaped`）。
 3. `Puzzle` 接口新增了 `applySilent(move)`（不写历史），打乱动画专用。
+4. **相机拾取射线必须朝 `-zc`**：`zc` 是「原点 → 相机」的外向轴，`project()` 只在 `vz < 0`（点在相机前方）时可见，因此 `OrbitCamera.ray()` 的方向是 `-zc` 加横向偏移。写成 `+zc` 会让 `pick()` 恒返回 `null`——症状是**魔方完全拖不动但渲染一切正常**（渲染不走射线）。改动相机/拾取后务必跑 `npm run smoke`（内含真实鼠标拖动回归，用 `sendInputEvent` 断言历史新增 1 步）。
 
 ## 远程仓库与 Git 环境
 - GitHub：https://github.com/Marco2015-coder/electronic-rubik-s-cube （public，主分支 main）。

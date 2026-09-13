@@ -2,7 +2,7 @@
  * 轨道相机：球坐标 + 惯性阻尼 + 透视投影 + 屏幕射线（用于拾取）。
  */
 
-import { Mat3, Vec3, V, mApply, mTranspose, vAdd, vCross, vNorm, vScale } from '../shared/math';
+import { Mat3, Vec3, V, mApply, mTranspose, vAdd, vCross, vNorm, vScale, vSub } from '../shared/math';
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
@@ -99,9 +99,9 @@ export class OrbitCamera {
   ray(px: number, py: number): { origin: Vec3; dir: Vec3 } {
     const sx = (px - this.viewWidth / 2) / this.focal;
     const sy = -(py - this.viewHeight / 2) / this.focal;
-    const dir = vNorm(
-      vAdd(vAdd(vScale(this.xc, sx), vScale(this.yc, sy)), this.zc),
-    );
+    // zc 是「原点 → 相机」的轴（eye = target + zc·distance），相机看向 -zc；
+    // 这里必须朝 -zc 偏移，写成 +zc 射线会打到相机背后，拾取永远返回 null（拖不动魔方）。
+    const dir = vNorm(vSub(vAdd(vScale(this.xc, sx), vScale(this.yc, sy)), this.zc));
     return { origin: this.eye, dir };
   }
 

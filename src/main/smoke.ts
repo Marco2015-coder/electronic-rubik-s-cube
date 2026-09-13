@@ -46,6 +46,36 @@ export async function runSmokeTest(win: BrowserWindow, outDir: string): Promise<
       })()
     `);
 
+  const historyLength = (): Promise<number> =>
+    win.webContents.executeJavaScript('window.__cubeApp.puzzle ? window.__cubeApp.puzzle.history.length : -1');
+
+  /**
+   * 用真实鼠标输入事件在画面中心拖一把，返回本次新增的转动步数。
+   *
+   * 之所以要模拟真实输入而不是直接调 `apply()`：拾取（`camera.ray` → 射线求交）和
+   * 「按拖动方向选转法」这两段逻辑只有走 pointer 事件才会被覆盖。曾出现过射线方向
+   * 取反（`+zc` 写成 `-zc`）导致点哪都拾取不到、魔方完全拖不动，而之前的冒烟测试
+   * 只调 API，所以毫无察觉。
+   */
+  const dragTurn = async (): Promise<number> => {
+    const before = await historyLength();
+    const size = await win.webContents.executeJavaScript(
+      `(() => { const r = document.getElementById('stage').getBoundingClientRect(); return { w: r.width, h: r.height }; })()`,
+    );
+    const cx = Math.round(size.w / 2);
+    const cy = Math.round(size.h / 2);
+    win.webContents.sendInputEvent({ type: 'mouseMove', x: cx, y: cy });
+    await wait(60);
+    win.webContents.sendInputEvent({ type: 'mouseDown', x: cx, y: cy, button: 'left', clickCount: 1 });
+    for (let i = 1; i <= 10; i++) {
+      win.webContents.sendInputEvent({ type: 'mouseMove', x: cx + i * 12, y: cy });
+      await wait(16);
+    }
+    win.webContents.sendInputEvent({ type: 'mouseUp', x: cx + 120, y: cy, button: 'left', clickCount: 1 });
+    await wait(700);
+    return (await historyLength()) - before;
+  };
+
   try {
     await wait(1400);
     await shot('app-01-menu');
@@ -55,6 +85,15 @@ export async function runSmokeTest(win: BrowserWindow, outDir: string): Promise<
       if (!ok) problems.push(`找不到卡片：${card}`);
       await wait(700);
       await shot(`app-0${index + 2}-${card}`);
+      if (index === 0) {
+        // 回归检查：手动拖动的完整链路（拾取 → 方向判定 → 动画）
+        const turned = await dragTurn();
+        if (turned === 1) {
+          stepLog.push('拖动测试：拖动贴纸成功转过一层');
+        } else {
+          problems.push(`拖动贴纸没有产生转动（历史新增 ${turned} 步）`);
+        }
+      }
       await win.webContents.executeJavaScript('window.__cubeApp.scramble()');
       await wait(2600);
       await shot(`app-0${index + 2}b-${card}-scrambled`);

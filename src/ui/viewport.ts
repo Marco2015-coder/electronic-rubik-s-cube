@@ -233,7 +233,10 @@ export class Viewport {
 
       this.pointer = {
         id: e.pointerId,
-        mode: hit ? 'turn' : wantsOrbit ? 'orbit' : 'idle',
+        // 命中贴纸 → 转层；其余（右键 / 中键 / Alt / 点到空白）→ 转视角。
+        // 点空白以前是 'idle'（完全不动），跟界面文案「拖空白处转视角」不符，
+        // 用起来像卡住了。
+        mode: hit ? 'turn' : 'orbit',
         startX: x,
         startY: y,
         lastX: x,
