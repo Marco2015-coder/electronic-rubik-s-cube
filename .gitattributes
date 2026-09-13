@@ -1,0 +1,11 @@
+# 统一以 LF 存入仓库、以 LF 检出，避免 Windows / U 盘 / GitHub 往返时换行符被反复改写
+* text=auto eol=lf
+
+# 二进制资源不做换行符转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

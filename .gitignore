@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+release/
+preview-out/
+*.log
+*.local
+
+# 系统 / 编辑器（U 盘插来插去容易生成这些）
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

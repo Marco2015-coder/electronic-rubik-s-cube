@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;"
+    />
+    <title>电子魔方</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+
+    <!-- 游戏内界面 -->
+    <div id="game-ui" class="hidden">
+      <header class="topbar">
+        <button class="icon-btn" id="btn-back" title="返回选魔方">☰</button>
+        <div class="title-block">
+          <div class="puzzle-name" id="puzzle-name">普通三阶魔方</div>
+          <div class="puzzle-sub" id="puzzle-sub">拖动贴纸转动 · 拖空白处转视角</div>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">时间</span>
+            <span class="stat-value" id="stat-time">0.00</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">步数</span>
+            <span class="stat-value" id="stat-moves">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">最佳</span>
+            <span class="stat-value" id="stat-best">—</span>
+          </div>
+        </div>
+        <button class="icon-btn" id="btn-settings" title="设置">⚙</button>
+      </header>
+
+      <footer class="bottombar">
+        <button class="pill primary" id="btn-scramble">打乱</button>
+        <button class="pill" id="btn-undo">撤销</button>
+        <button class="pill" id="btn-reset">重置</button>
+        <button class="pill ghost" id="btn-hint">提示</button>
+      </footer>
+    </div>
+
+    <!-- 选魔方 -->
+    <section id="menu">
+      <div class="menu-inner">
+        <header class="menu-head">
+          <h1>电子魔方</h1>
+          <p>选择一种魔方开始，共 <span id="menu-count">13</span> 种</p>
+        </header>
+        <div id="menu-groups"></div>
+        <footer class="menu-foot">
+          <button class="pill" id="btn-theme">配色：普通</button>
+          <button class="pill" id="btn-settings-2">设置</button>
+        </footer>
+      </div>
+    </section>
+
+    <!-- 设置面板 -->
+    <aside id="settings" class="hidden">
+      <div class="settings-head">
+        <h2>设置</h2>
+        <button class="icon-btn" id="btn-settings-close">✕</button>
+      </div>
+      <div class="settings-body" id="settings-body"></div>
+    </aside>
+    <div id="scrim" class="hidden"></div>
+
+    <div id="toast" class="hidden"></div>
+
+    <div id="celebrate" class="hidden">
+      <div class="celebrate-card">
+        <div class="celebrate-title">复原成功！</div>
+        <div class="celebrate-stats" id="celebrate-stats"></div>
+        <div class="celebrate-actions">
+          <button class="pill primary" id="btn-again">再来一次</button>
+          <button class="pill" id="btn-celebrate-close">继续查看</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="bundle.js"></script>
+  </body>
+</html>
